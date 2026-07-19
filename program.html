@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Szalagfűrész Adatbázis - Lekérdezés</title>
+    <style>
+        /* Alap stílusok */
+        body { 
+            font-family: Arial, sans-serif; 
+            background-color: #121212; 
+            color: #ffffff; 
+            text-align: center; 
+            padding: 20px;
+            -webkit-user-select: none; /* Kijelölés tiltása Safari */
+            -ms-user-select: none; /* Kijelölés tiltása IE */
+            user-select: none; /* Kijelölés tiltása minden modern böngészőben */
+        }
+        .app-container { max-width: 600px; margin: 50px auto; padding: 30px; background: #1e1e1e; border-radius: 10px; border: 1px solid #333; position: relative; }
+        select, button { padding: 12px; width: 80%; margin: 10px 0; border-radius: 5px; border: 1px solid #444; background: #2a2a2a; color: white; font-size: 1em; }
+        button { background: #ff6600; font-weight: bold; cursor: pointer; border: none; }
+        button:hover { background: #e05500; }
+        .result-box { margin-top: 30px; padding: 20px; background: #2d2d2d; border-radius: 5px; border-left: 5px solid #ff6600; display: none; font-size: 1.2em; }
+        
+        /* VÍZJEL a szivárogtatás ellen */
+        .watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-30px); font-size: 3em; color: rgba(255, 255, 255, 0.03); pointer-events: none; white-space: nowrap; }
+
+        /* NYOMTATÁS LETILTÁSA: Ha nyomtatni akarja, minden eltűnik */
+        @media print {
+            body * { display: none !important; }
+        }
+    </style>
+</head>
+<!-- Jobb klikk tiltása az oldalon -->
+<body oncontextmenu="return false;">
+
+    <div class="app-container" id="mainApp">
+        <!-- Vízjel: ide dinamikusan bekerül majd a vevő email címe -->
+        <div class="watermark">MÁSOLÁS VÉDETT - ELŐFIZETŐS TARTALOM</div>
+
+        <h2>Szalagfűrész Forgácsolási Adatok</h2>
+        <p>Válaszd ki a paramétereket az optimális beállításhoz:</p>
+
+        <label for="material">Alapanyag típusa:</label>
+        <select id="material">
+            <option value="tolgy">Tölgyfa (Keményfa)</option>
+            <option value="fenyo">Fenyőfa (Puhafa)</option>
+            <option value="alu">Alumínium</option>
+        </select>
+
+        <label for="thickness">Anyagvastagság:</label>
+        <select id="thickness">
+            <option value="vékony">0 - 20 mm</option>
+            <option value="közepes">21 - 50 mm</option>
+            <option value="vastag">50 mm felett</option>
+        </select>
+
+        <button onclick="getCuttingData()">Optimális adatok lekérése</button>
+
+        <div class="result-box" id="resultBox">
+            <strong>Ajánlott Vágási Sebesség:</strong> <span id="speedVal">--</span> m/perc<br>
+            <strong>Ajánlott Fogosztás (TPI):</strong> <span id="tpiVal">--</span>
+        </div>
+    </div>
+
+    <script>
+        // Egyszerű beépített tesztadatbázis (Ezt a 2. héten kiszervezzük a védett háttérbe)
+        const mockDatabase = {
+            "tolgy-vékony": { speed: 20, tpi: 6 },
+            "tolgy-közepes": { speed: 15, tpi: 4 },
+            "tolgy-vastag": { speed: 12, tpi: 3 },
+            "fenyo-vékony": { speed: 30, tpi: 6 },
+            "fenyo-közepes": { speed: 25, tpi: 4 },
+            "fenyo-vastag": { speed: 20, tpi: 3 },
+            "alu-vékony": { speed: 80, tpi: 10 },
+            "alu-közepes": { speed: 60, tpi: 8 },
+            "alu-vastag": { speed: 40, tpi: 6 }
+        };
+
+        function getCuttingData() {
+            const mat = document.getElementById('material').value;
+            const thick = document.getElementById('thickness').value;
+            const key = `${mat}-${thick}`;
+            
+            const data = mockDatabase[key];
+            
+            if(data) {
+                document.getElementById('speedVal').innerText = data.speed;
+                document.getElementById('tpiVal').innerText = data.tpi;
+                document.getElementById('resultBox').style.display = 'block';
+            }
+        }
+
+        // KÉPERNYŐMENTŐ ÉS METSZŐESZKÖZ ELLENI VÉDELEM: 
+        // Ha elhagyja az oldalt (pl. elindít egy mentő programot), elhomályosodik a tartalom
+        window.addEventListener('blur', () => {
+            document.getElementById('mainApp').style.filter = 'blur(15px)';
+        });
+        window.addEventListener('focus', () => {
+            document.getElementById('mainApp').style.filter = 'none';
+        });
+
+        // Billentyűzet kombinációk tiltása (Ctrl+S, Ctrl+P, F12 fejlesztői mód)
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && (e.key === 'p' || e.key === 's' || e.key === 'u')) {
+                e.preventDefault();
+                alert('A tartalom mentése és nyomtatása biztonsági okokból le van tiltva.');
+            }
+            if (e.key === 'F12') {
+                e.preventDefault();
+            }
+        });
+    </script>
+</body>
+</html>
