@@ -1,0 +1,25 @@
+{
+  "beallitasok": {
+    "aktualis_ev": 2026,
+    "inflacio_szorzo": 1.00,
+    "alap_ar_huf": 19900,
+    "bunteto_ar_huf": 34900
+  },
+  "vagasi_adatok": {
+    "tolgyfa": {
+      "vekony_0_20mm": { "sebesseg_m_perc": 20, "tpi": 6, "elotolas": "Közepes" },
+      "kozepes_21_50mm": { "sebesseg_m_perc": 15, "tpi": 4, "elotolas": "Közepes" },
+      "vastag_51mm_felett": { "sebesseg_m_perc": 12, "tpi": 3, "elotolas": "Lassú" }
+    },
+    "fenyofa": {
+      "vekony_0_20mm": { "sebesseg_m_perc": 30, "tpi": 6, "elotolas": "Gyors" },
+      "kozepes_21_50mm": { "sebesseg_m_perc": 25, "tpi": 4, "elotolas": "Közepes" },
+      "vastag_51mm_felett": { "sebesseg_m_perc": 20, "tpi": 3, "elotolas": "Közepes" }
+    },
+    "aluminium": {
+      "vekony_0_20mm": { "sebesseg_m_perc": 80, "tpi": 10, "elotolas": "Lassú, egyenletes" },
+      "kozepes_21_50mm": { "sebesseg_m_perc": 60, "tpi": 8, "elotolas": "Lassú, gépigényes" },
+      "vastag_51mm_felett": { "sebesseg_m_perc": 40, "tpi": 6, "elotolas": "Nagyon lassú" }
+    }
+  }
+}
