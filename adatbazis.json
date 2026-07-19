@@ -21,5 +21,40 @@
       "kozepes_21_50mm": { "sebesseg_m_perc": 60, "tpi": 8, "elotolas": "Lassú, gépigényes" },
       "vastag_51mm_felett": { "sebesseg_m_perc": 40, "tpi": 6, "elotolas": "Nagyon lassú" }
     }
+  },
+  "anyagok": {
+    "rozsdamentes_acelok": {
+      "KO33_1_4301": "KO33 (1.4301) - Rozsdamentes",
+      "KO36": "KO36 - Saválló",
+      "KO16_1_4057": "KO16 (1.4057) - Martenzites rozsdamentes"
+    },
+    "szerkezeti_acelok": {
+      "S235_ST37": "S235 / ST37 - Általános szerkezeti acél",
+      "S355_ST52": "S355 / ST52 - Emelt folyáshatárú acél"
+    },
+    "szinesfemek_es_otvozeteik": {
+      "sargarez": "Sárgaréz",
+      "vorosrez": "Vörösréz",
+      "aluminium_AlMgSi": "Alumínium (AlMgSi 0.5-1)",
+      "bronz_CuSn": "Bronz (CuSn8 - CuSn12)",
+      "carobronz": "Carobronz (Foszforbronz)"
+    },
+    "specialis_es_nehez_femek": {
+      "titan_grade2": "Titán (Grade 2 - Lágyabb)",
+      "titan_grade5": "Titán (Grade 5 - Ti-6Al-4V)",
+      "boehler_szerszamacel": "Böhler (Szerszámacélok)",
+      "duplex_acel": "Duplex (Kétfázisú rozsdamentes acél)",
+      "wolfram": "Wolfram (Volfram)"
+    },
+    "muanyagok_es_kompozitok": {
+      "poliamid_PA6": "Poliamid (PA 6 / Ertalon)",
+      "POM_C": "POM-C (Polioximetilén Kopolimer)",
+      "POM_H": "POM-H (Polioximetilén Homopolimer)",
+      "textilbakelit": "Textilbakelit",
+      "akril_plexi": "Akril (Plexi / PMMA)",
+      "pvc": "PVC (Polivinilklorid)",
+      "GRP_uvegszal": "GRP (Üvegszál erősítésű műanyag)",
+      "CRP_karbon": "CRP (Karbon-grafit erősítésű kompozit)"
+    }
   }
 }
