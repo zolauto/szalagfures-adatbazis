@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Fejlesztői adatbeviteli oldal</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;margin:24px}
+    label{display:block;margin:10px 0 4px}
+    input,select,button{padding:8px;font-size:16px}
+    .row{display:flex;gap:12px;align-items:center}
+    .col{flex:1}
+    table{width:100%;border-collapse:collapse;margin-top:16px}
+    th,td{border:1px solid #ddd;padding:8px;text-align:left}
+    .actions{margin-top:12px;display:flex;gap:8px}
+    .note{color:#555;font-size:14px}
+  </style>
+</head>
+<body>
+  <h1>Fejlesztői adatbeviteli oldal</h1>
+  <p class="note">Válassz a korábban megadott értékek közül, vagy írj be újat. Ha egy mező értéke hiányzik, numerikus mezőkhez <strong>0</strong>, szöveges mezőkhez <strong>-</strong> lesz tárolva.</p>
+
+  <form id="recordForm">
+    <label for="diameter">D: Átmérő (pl. D38)</label>
+    <input list="diameters" id="diameter" name="diameter" placeholder="D38" class="col">
+    <datalist id="diameters"></datalist>
+
+    <label for="material">Anyagminőség (pl. S255)</label>
+    <input list="materials" id="material" name="material" placeholder="S255" class="col">
+    <datalist id="materials"></datalist>
+
+    <label for="timeSec">Idő (másodperc) (pl. 133")</label>
+    <input list="times" id="timeSec" name="timeSec" placeholder="133\"" class="col">
+    <datalist id="times"></datalist>
+
+    <label for="beltSpeed">Szalagsebesség (pl. 60)</label>
+    <input list="beltSpeeds" id="beltSpeed" name="beltSpeed" placeholder="60" class="col">
+    <datalist id="beltSpeeds"></datalist>
+
+    <label for="feed">Fogásvétel (pl. 3.5)</label>
+    <input list="feeds" id="feed" name="feed" placeholder="3.5" class="col">
+    <datalist id="feeds"></datalist>
+
+    <label for="current">Áramerősség A (pl. 1.58 A)</label>
+    <input list="currents" id="current" name="current" placeholder="1.58 A" class="col">
+    <datalist id="currents"></datalist>
+
+    <label for="partNumber">Cikkszám (pl. K10763)</label>
+    <input list="partNumbers" id="partNumber" name="partNumber" placeholder="K10763" class="col">
+    <datalist id="partNumbers"></datalist>
+
+    <label for="shelf">Polchely (pl. E3)</label>
+    <input list="shelves" id="shelf" name="shelf" placeholder="E3" class="col">
+    <datalist id="shelves"></datalist>
+
+    <div class="actions">
+      <button type="button" id="saveRecord">Mentés (adatbázisba)</button>
+      <button type="button" id="addValues">Hozzáad(új értékek a listákhoz)</button>
+      <button type="button" id="sampleFill">Mintapéldány betöltése</button>
+      <button type="button" id="exportJson">Exportálás JSON</button>
+      <button type="button" id="clearAll">Törlés: minden</button>
+    </div>
+  </form>
+
+  <h2>Mentett rekordok</h2>
+  <div id="recordsContainer"></div>
+
+  <script>
+    // Kulcsok localStorage-ben
+    const STORE_KEYS = {
+      lists: {
+        diameter: 'list:diameter',
+        material: 'list:material',
+        time: 'list:time',
+        belt: 'list:belt',
+        feed: 'list:feed',
+        current: 'list:current',
+        part: 'list:part',
+        shelf: 'list:shelf'
+      },
+      records: 'records'
+    }
+
+    // Helper: get/set JSON in localStorage
+    function getJSON(key, fallback){
+      try{ const v = localStorage.getItem(key); return v? JSON.parse(v): fallback }
+      catch(e){ console.error('parse error', key, e); return fallback }
+    }
+    function setJSON(key, val){ localStorage.setItem(key, JSON.stringify(val)) }
+
+    // Inicializálás: betöltjük a datalist-eket és a rekordokat
+    function populateDatalists(){
+      for(const [field,key] of Object.entries(STORE_KEYS.lists)){
+        const listEl = document.getElementById(getDatalistId(field))
+        listEl.innerHTML = ''
+        const arr = getJSON(key, [])
+        arr.forEach(v=>{
+          const opt = document.createElement('option'); opt.value = v; listEl.appendChild(opt)
+        })
+      }
+    }
+
+    function getDatalistId(field){
+      switch(field){
+        case 'diameter': return 'diameters'
+        case 'material': return 'materials'
+        case 'time': return 'times'
+        case 'belt': return 'beltSpeeds'
+        case 'feed': return 'feeds'
+        case 'current': return 'currents'
+        case 'part': return 'partNumbers'
+        case 'shelf': return 'shelves'
+      }
+    }
+
+    function normalizeValues(raw){
+      // Numerikus mezők: diameter (but often contains D prefix), timeSec, beltSpeed, feed, current
+      // We'll treat diameter and current as strings (they often include units), but numeric-looking fields replaced with 0 when empty.
+      const out = {}
+      out.diameter = raw.diameter?.trim() || '-' 
+      out.material = raw.material?.trim() || '-'
+      out.timeSec = raw.timeSec?.trim() || '0'
+      out.beltSpeed = raw.beltSpeed?.trim() || '0'
+      out.feed = raw.feed?.trim() || '0'
+      out.current = raw.current?.trim() || '0'
+      out.partNumber = raw.partNumber?.trim() || '-'
+      out.shelf = raw.shelf?.trim() || '-'
+      return out
+    }
+
+    function renderRecords(){
+      const records = getJSON(STORE_KEYS.records, [])
+      const container = document.getElementById('recordsContainer')
+      if(records.length === 0){ container.innerHTML = '<p class="note">Nincs mentett rekord.</p>'; return }
+      let html = '<table><thead><tr>' +
+        '<th>#</th><th>D</th><th>Anyag</th><th>Idő (s)</th><th>Szalagseb.</th><th>Fogásvétel</th><th>Áram (A)</th><th>Cikkszám</th><th>Polc</th><th>Műveletek</th>' +
+        '</tr></thead><tbody>'
+      records.forEach((r,i)=>{
+        html += `<tr><td>${i+1}</td><td>${escapeHtml(r.diameter)}</td><td>${escapeHtml(r.material)}</td><td>${escapeHtml(r.timeSec)}</td><td>${escapeHtml(r.beltSpeed)}</td><td>${escapeHtml(r.feed)}</td><td>${escapeHtml(r.current)}</td><td>${escapeHtml(r.partNumber)}</td><td>${escapeHtml(r.shelf)}</td><td><button data-i="${i}" class="deleteBtn">Töröl</button></td></tr>`
+      })
+      html += '</tbody></table>'
+      container.innerHTML = html
+
+      document.querySelectorAll('.deleteBtn').forEach(btn=> btn.addEventListener('click', e=>{
+        const i = Number(e.currentTarget.dataset.i)
+        const arr = getJSON(STORE_KEYS.records, [])
+        arr.splice(i,1)
+        setJSON(STORE_KEYS.records, arr)
+        renderRecords()
+      }))
+    }
+
+    function escapeHtml(s){ return String(s).replace(/[&<>\"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\\':'\\\\','"':'&quot;'}[c])) }
+
+    // Események
+    document.getElementById('addValues').addEventListener('click', ()=>{
+      // add current inputs to lists if not empty
+      const form = document.getElementById('recordForm')
+      const raw = {
+        diameter: form.diameter.value,
+        material: form.material.value,
+        time: form.timeSec.value,
+        belt: form.beltSpeed.value,
+        feed: form.feed.value,
+        current: form.current.value,
+        part: form.partNumber.value,
+        shelf: form.shelf.value
+      }
+      for(const [field,key] of Object.entries(STORE_KEYS.lists)){
+        const val = raw[field] || ''
+        if(!val) continue
+        const arr = getJSON(key, [])
+        if(!arr.includes(val)){
+          arr.push(val)
+          setJSON(key, arr)
+        }
+      }
+      populateDatalists()
+      alert('Új értékek hozzáadva a választólistákhoz (ha volt beírva).')
+    })
+
+    document.getElementById('saveRecord').addEventListener('click', ()=>{
+      const form = document.getElementById('recordForm')
+      const raw = {
+        diameter: form.diameter.value,
+        material: form.material.value,
+        timeSec: form.timeSec.value,
+        beltSpeed: form.beltSpeed.value,
+        feed: form.feed.value,
+        current: form.current.value,
+        partNumber: form.partNumber.value,
+        shelf: form.shelf.value
+      }
+      const norm = normalizeValues(raw)
+      const records = getJSON(STORE_KEYS.records, [])
+      records.push(norm)
+      setJSON(STORE_KEYS.records, records)
+
+      // automatikusan vegyük fel a listákba az új értékeket
+      for(const [field,key] of Object.entries(STORE_KEYS.lists)){
+        const fieldMap = {
+          diameter: 'diameter', material: 'material', time: 'time', belt: 'belt', feed: 'feed', current: 'current', part: 'part', shelf: 'shelf'
+        }
+        const inputVal = raw[fieldMap[field]] || raw[field] || ''
+        if(inputVal){
+          const arr = getJSON(key, [])
+          if(!arr.includes(inputVal)){
+            arr.push(inputVal)
+            setJSON(key, arr)
+          }
+        }
+      }
+
+      populateDatalists()
+      renderRecords()
+      alert('Rekord mentve.')
+      form.reset()
+    })
+
+    document.getElementById('clearAll').addEventListener('click', ()=>{
+      if(!confirm('Biztosan törölni szeretnéd az összes tárolt adatot?')) return
+      for(const k of Object.values(STORE_KEYS.lists)) localStorage.removeItem(k)
+      localStorage.removeItem(STORE_KEYS.records)
+      populateDatalists(); renderRecords();
+    })
+
+    document.getElementById('exportJson').addEventListener('click', ()=>{
+      const records = getJSON(STORE_KEYS.records, [])
+      const dataStr = JSON.stringify(records, null, 2)
+      const blob = new Blob([dataStr], {type:'application/json'})
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a'); a.href = url; a.download = 'records.json'; a.click(); URL.revokeObjectURL(url)
+    })
+
+    document.getElementById('sampleFill').addEventListener('click', ()=>{
+      // A felhasználó által megadott példa betöltése a mezőkbe
+      const form = document.getElementById('recordForm')
+      form.diameter.value = 'D38'
+      form.material.value = 'S255'
+      form.timeSec.value = '133"'
+      form.beltSpeed.value = '60'
+      form.feed.value = '3.5'
+      form.current.value = '1.58 A'
+      form.partNumber.value = 'K10763'
+      form.shelf.value = 'E3'
+    })
+
+    // Betöltés induláskor
+    (function init(){
+      populateDatalists()
+      renderRecords()
+    })()
+
+  </script>
+</body>
+</html>
